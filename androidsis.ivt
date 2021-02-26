@@ -1,28 +1,49 @@
-#Versión de instant view.
+# Declaramos que versión usamos de instant view.
 ~version: "2.1"
-#Funciona en cualquier pagina a partir de la raiz.
+
+# Definimos que urls usan la plantilla y cuales no.
 ?path: /.+
-#Variables:
-$articulo: //article[has-class("type-post")]
-$imagenes: //img
+!path_not: /
+!path_not: /category/
+!path_not: /category/.+
+!path_not: /wallpapers/
+!path_not: /wallpapers/.+
+!path_not: /secciones/
 # ¿Existe la etiqueta articulo y contiene la clase type-post?
-?exists: $articulo
-#Eliminamos las imágenes para navegadores que no soportan javascript.
-@remove: //noscript
-#Eliminamos elementos.
+#?exists: //div[@id="content"]
+?exists: //article[has-class("type-post")]
+
+# Eliminamos elementos.
 @remove: //div//a[@class="site-logo"]
 #@remove: //p[.//img]
 #@remove: //a[.//img]
 #@remove: //p[.//aside]
 @remove: //div[@id="abn-shares-buttons"]
 @remove: //div[@id="toc_container"]
-#Reemplazamos ciertos tags anidados que la funcion simplify no soporta.
+@remove: //noscript//img
+
+# Reemplazamos ciertos tags anidados que la función simplify no soporta.
 @replace_tag(<div>): //a[.//img]
 @replace_tag(<div>): //h3[.//img]
 @replace_tag(<div>): //p[.//aside]
 @replace_tag(<div>): //p[.//img]
-#Reemplazamos el atributo src por data-lazy-src ya que el contenido de src por defecto no se soporta.
+@replace_tag(<div>): //p[.//iframe]
+
+# Reemplazamos el atributo src por data-lazy-src ya que el contenido de src por defecto no se soporta.
 @set_attr(src, @data-lazy-src): //img
-#Definimos las partes del articulo basicas para la generación del IV.
+
+# Definimos las partes del articulo básicas para la generación del IV.
 title: //h1[has-class("post-title")]
 body: //div[@class="post-content"]
+
+# Gestión googleplay.
+@if (//div[has-class("googleplay")]) {
+  @remove: //div[has-class("qrcode")]
+  @remove: //div[has-class("applinks")]
+  #@remove: //div[has-class("appicon")]
+  @remove: //div[has-class("screenshots")]
+}
+
+# Gestión dailymotion
+@remove: //iframe[contains(@data-lazy-src, "www.dailymotion.com")]
+@remove: //iframe[contains(@src, "www.dailymotion.com")]
