@@ -9,8 +9,8 @@
 !path_not: /wallpapers/
 !path_not: /wallpapers/.+
 !path_not: /secciones/
+
 # ¿Existe la etiqueta articulo y contiene la clase type-post?
-#?exists: //div[@id="content"]
 ?exists: //article[has-class("type-post")]
 
 # Eliminamos elementos.
