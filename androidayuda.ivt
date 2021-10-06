@@ -1,0 +1,60 @@
+# Declaramos que versión usamos de instant view.
+~version: "2.1"
+
+# Definimos que urls usan la plantilla y cuales no.
+?path: /.+
+!path_not: /
+!path_not: /noticias/
+!path_not: /noticias/android/
+!path_not: /noticias/aplicaciones/
+!path_not: /noticias/juegos/
+!path_not: /noticias/moviles/
+!path_not: /noticias/ofertas/
+!path_not: /juegos/
+!path_not: /juegos/recomendados/
+!path_not: /juegos/listas/
+!path_not: /juegos/tutoriales/
+!path_not: /aplicaciones/recomendadas/
+!path_not: /aplicaciones/listas/
+!path_not: /aplicaciones/tutoriales/
+!path_not: /android/tutoriales/
+!path_not: /android/que-es/
+!path_not: /reportajes/comparativas/
+!path_not: /reportajes/moviles/
+!path_not: /reportajes/software/
+!path_not: /reportajes/branded/
+
+# Eliminamos elementos.
+@remove: //div//a[@class="site-logo"]
+#@remove: //p[.//img]
+#@remove: //a[.//img]
+#@remove: //p[.//aside]
+@remove: //div[@id="abn-shares-buttons"]
+@remove: //div[@id="toc_container"]
+@remove: //noscript//img
+
+# Reemplazamos ciertos tags anidados que la función simplify no soporta.
+@replace_tag(<div>): //a[.//img]
+@replace_tag(<div>): //h3[.//img]
+@replace_tag(<div>): //p[.//aside]
+@replace_tag(<div>): //p[.//img]
+@replace_tag(<div>): //p[.//iframe]
+
+# Reemplazamos el atributo src por data-lazy-src ya que el contenido de src por defecto no se soporta.
+@set_attr(src, @data-lazy-src): //img
+
+# Definimos las partes del articulo básicas para la generación del IV.
+title: //h1[has-class("post-title")]
+body: //div[@class="post-content"]
+
+# Gestión googleplay.
+@if (//div[has-class("googleplay")]) {
+  @remove: //div[has-class("qrcode")]
+  @remove: //div[has-class("applinks")]
+  #@remove: //div[has-class("appicon")]
+  @remove: //div[has-class("screenshots")]
+}
+
+# Gestión dailymotion
+@remove: //iframe[contains(@data-lazy-src, "www.dailymotion.com")]
+@remove: //iframe[contains(@src, "www.dailymotion.com")]
