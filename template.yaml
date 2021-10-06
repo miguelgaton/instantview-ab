@@ -1,0 +1,136 @@
+## General info:
+# Function starts with @
+# Variable starts with $
+# Return of the most recently run function made by $@
+# Key comments marked with ##
+
+## Version of IV must be set first
+   ~version:     "2.1"
+
+# Telegram doesn't support JW Player which is used in videoheaders
+# Check if such element exist, if true - don't generate IV
+   ?not_exists:  //div[has-class("video-player-header")]
+
+## Set Site Name and Telegram Сhannel properties
+   site_name:    "DEV"
+   channel:      "@devtotg"
+
+# Instead of using properties at start, highly recommended to use variables
+# Variables way easier to modify
+   $article:     //div[@id="article-body"]
+   $title:       //h1[0] # Use first h1 as title
+   $kicker:      //a[has-class("org-branded-title-link")]
+   $author:      //span[@itemprop="author"]//span[@itemprop="name"]
+   $author_url:  //span[@itemprop="author"]//meta[@itemprop="url"]/@content
+   $date_published:  //time
+  @background_to_image: //div[has-class("image")]
+# Function to convert <div  style="background-image:url(https://dev.to/.../img.jpg)" class="image"></div>
+# into <img src="https://dev.to/.../img.jpg">
+   $cover:       $@      # Apply <img src="https://dev.to/.../img.jpg"> as $cover
+
+# Select all images which should be inlined
+   $icons:   //div[has-class("ltag__user__pic")]/img
+   $icons+:  //div[has-class("ltag__link__pic")]/img
+   $icons+:  $kicker//img
+   $icons+:  //div[has-class("liquid-comment")]//img
+
+# Select all blockquotes
+   $quote:   //div[has-class("liquid-comment")]
+   $quote+:  //div[has-class("ltag__link")]
+
+
+## Set proterties from variables
+   body:       $article
+   title:      $title
+   kicker:     $kicker
+   author:     $author
+   author_url: $author_url
+   cover:      $cover
+# Function to convert all date formats to Unixtime
+  @datetime:      $date_published
+   published_date: $@
+
+   <pic>:          $icons # Replacing <img> with <pic> for inlined images
+   $icons:         $@
+
+   <blockquote>:   $quote # Replacing <div> with <blockquote> for quotes
+   $quote:         $@
+
+
+## Transform Article Collection into <related> block
+#Prepend top and append bottom block to article
+  @prepend_to($body): //div[has-class("article-collection-wrapper-top")]
+  @append_to($body):  //div[has-class("article-collection-wrapper-bottom")]
+#Replace <div> tag with <related>
+   <related>:          //div[starts-with(@class, "article-collection-")]
+   $article_collection: $@
+# //related/div/a → //related/a
+  @split_parent:      $article_collection//a
+# Remove blank <div>
+  @remove:            $article_collection//div
+# Needed for IV displaying
+# https://example.com → https%3A%2F%2Fexample.com
+  @urlencode: $article_collection//a/@href
+# Apply template by modifying href to
+# Force transform dev.to articles as IV so they can display in IV
+  @set_attr(href, "https://t.me/iv?url=https%3A%2F%2Fdev.to", @href, "&rhash=4c51a828a8d227"): $article_collection//a
+# Setting header to <related> block
+   <h6>:               $article_collection//p
+
+## Set icon size
+  @set_attrs(width, "64", height, "64"): $quote//div[has-class("ltag__link__pic")]/pic
+  @set_attrs(width, "14", height, "14"): $kicker//pic
+
+## Fix link in kicker
+  @wrap_inner(<a>):   $kicker//div
+  @set_attr(href, $kicker/@href): $@
+
+## Create clickable <img>
+# Regex and hard XPath alert!
+# <a href="/not-a-link-to-bigger-image/"><img></a> → <img href="/not-a-link-to-bigger-image/">
+  @match("(?i).+(?<!\\.jpg|\\.jpeg|\\.png|\\.gif)$"): //a[descendant::img]/@href
+  @set_attr(href, "./..//self::a/@href"): //a[not(@href = //link[@rel="canonical"]/@href) and not(@href = //meta[@property="og:url"]/@content)]//img
+
+## Support Twitter blockquote
+# But it most be formatted in a certain way
+  @remove: //blockquote[has-class("ltag__twitter-tweet")]//* # Remove cached tweet
+  @prepend(<a>, href, @data-url): //blockquote[has-class("ltag__twitter-tweet")] # Insert <a href="link-to-tweet"> in blockquote
+  @replace("ltag__twitter-tweet", "twitter-tweet"): //blockquote/@class # Replace to right class so IV can do its magic
+
+
+## Remove unwanted elements
+  @remove:  //button
+  @remove:  //pic[ends-with(@src, ".svg")]
+  @remove:  //img[ends-with(@src, ".svg")]
+  @remove:  //p[has-class("ltag__user__social")]
+  @remove:  //div[has-class("ltag-github-readme-tag")]
+
+
+## Handler for NESTED_ELEMENT_NOT_SUPPORTED error
+## Highly reccomend to use it in all of your templates, just put it in the end
+   $problems: $body
+  @while( $problems ) {
+   $test: $body//*[self::*[has-class("fb-post")] or self::blockquote or self::aside or self::figure or self::img[not(./ancestor::figure)] or self::iframe[not(./ancestor::figure)] or self::script[@data-telegram-post] or self::slideshow[not(./ancestor::figure)] or self::video[not(./ancestor::figure)] or self::audio[not(./ancestor::figure)] or self::related or self::footer or self::table[not(ancestor::table) and not(descendant::table)]]
+# Original code/idea by Misho @mushi_f
+# With modifications by Andrei Afanasiev
+   $problems: $test/self::*[ancestor::anchor or ancestor::blockquote[not(contains(@class,"instagram"))] or ancestor::aside or ancestor::footer or ancestor::strong or ancestor::b or ancestor::em or ancestor::i or ancestor::ins or ancestor::u or ancestor::del or ancestor::s or ancestor::strike or ancestor::code or ancestor::kbd or ancestor::samp or ancestor::tt or ancestor::mark or ancestor::sup or ancestor::pic or ancestor::sub or ancestor::a or ancestor::reference or ancestor::h1 or ancestor::h2 or ancestor::h3 or ancestor::h4 or ancestor::h5 or ancestor::h6 or ancestor::p or ancestor::pre or ancestor::hr or ancestor::img or ancestor::br or ancestor::ul or ancestor::ol or ancestor::li]
+# Don't ask me what is going on here
+  @split_parent: $problems
+}
+
+## Add discuss link to #discuss articles
+# Check if there is #discuss tag
+   ?exists:  //a[@class="tag" and @href="/t/discuss"]
+# Append link to article
+  @append(<a>, href, //link[@rel="canonical"]/@href, content, "👋 DISCUSS on DEV"): $body
+   $discuss_link:      $@
+# Instert hr before link (so it look pretty)
+  @before(<hr>): $discuss_link
+# Insert text "👋 DISCUSS on DEV" from content attribute inside <a> tag
+  @append(@content):  $discuss_link
+# Transform link to article into anchor link to comments
+  @set_attr(href, @href, "#comments"): $discuss_link
+# Remove protocol so it would ask to open comments in Browser/App
+# If ignore, it would try to open it inside IV and fail
+  @replace("^https:\/\/", ""): $discuss_link/@href
+  @wrap(<h6>): $discuss_link
