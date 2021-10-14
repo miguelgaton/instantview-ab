@@ -32,6 +32,8 @@
 @remove: //div[@id="abn-shares-buttons"]
 @remove: //div[@id="toc_container"]
 @remove: //noscript//img
+# Imagenes webp no soportadas
+@remove: //img[ends-with(@data-lazy-src, ".webp")]
 
 # Reemplazamos ciertos tags anidados que la función simplify no soporta.
 @replace_tag(<div>): //a[.//img]
