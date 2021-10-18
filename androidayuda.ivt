@@ -32,6 +32,9 @@
 @remove: //div[@id="abn-shares-buttons"]
 @remove: //div[@id="toc_container"]
 @remove: //noscript//img
+
+# Eliminar caja articulo relacionado
+@remove: //a[has-class("post-relacionado")]
 # Imagenes webp no soportadas
 @remove: //img[ends-with(@data-lazy-src, ".webp")]
 
