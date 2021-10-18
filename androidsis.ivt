@@ -4,14 +4,25 @@
 # Definimos que urls usan la plantilla y cuales no.
 ?path: /.+
 !path_not: /
-!path_not: /category/
-!path_not: /category/.+
-!path_not: /wallpapers/
-!path_not: /wallpapers/.+
-!path_not: /secciones/
-
-# ¿Existe la etiqueta articulo y contiene la clase type-post?
-?exists: //article[has-class("type-post")]
+!path_not: /noticias/
+!path_not: /noticias/android/
+!path_not: /noticias/aplicaciones/
+!path_not: /noticias/juegos/
+!path_not: /noticias/moviles/
+!path_not: /noticias/ofertas/
+!path_not: /juegos/
+!path_not: /juegos/recomendados/
+!path_not: /juegos/listas/
+!path_not: /juegos/tutoriales/
+!path_not: /aplicaciones/recomendadas/
+!path_not: /aplicaciones/listas/
+!path_not: /aplicaciones/tutoriales/
+!path_not: /android/tutoriales/
+!path_not: /android/que-es/
+!path_not: /reportajes/comparativas/
+!path_not: /reportajes/moviles/
+!path_not: /reportajes/software/
+!path_not: /reportajes/branded/
 
 # Eliminamos elementos.
 @remove: //div//a[@class="site-logo"]
@@ -21,6 +32,10 @@
 @remove: //div[@id="abn-shares-buttons"]
 @remove: //div[@id="toc_container"]
 @remove: //noscript//img
+
+# Imagenes webp no soportadas
+@remove: //img[ends-with(@data-lazy-src, ".webp")]
+@remove: //img[ends-with(@src, ".webp")]
 
 # Reemplazamos ciertos tags anidados que la función simplify no soporta.
 @replace_tag(<div>): //a[.//img]
